@@ -5,7 +5,7 @@ import os
 import socket
 
 # send data to ws-daemon through Unix socket
-def wsdae_send(data):
+def send(data):
     socket_path = "/root/ws-daemon/ws-daemon.sock"
 
     if os.path.exists(socket_path):
