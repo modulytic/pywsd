@@ -7,10 +7,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pywsd",
-    version="0.0.1",
+    version="0.1.0",
     author="Noah Sandman",
     author_email="noah@modulytic.com",
-    description="Python lib for ws-daemon",
+    description="Python library for ws-daemon",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/modulytic/pywsd",
