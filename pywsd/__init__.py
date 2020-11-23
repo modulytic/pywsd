@@ -8,12 +8,15 @@ import socket
 from uuid import uuid4
 
 
+# Code to return if socket breaks
 SOCKET_FAILURE = -1
+
 
 class WsDaemon:
     def __init__(self, prefix=None):
         self.__prefix = os.getenv("WSDAEMON_PREFIX", "/root/ws-daemon") if prefix is None else prefix
 
+        # socket is kept in prefix folder
         socket_path = self.__get_prefix_file("ws-daemon.sock")
         if os.path.exists(socket_path):
             self.__client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -30,12 +33,15 @@ class WsDaemon:
         self.__client.close()
         
 
+    # execute a script on remote
     def execute(self, script, params):
+        # we need a unique ID so we can make sure the response is meant for us
         request_id = str(uuid4())
         sent = self.__send_payload(script, params, request_id=request_id)
         if not sent:
             return SOCKET_FAILURE
 
+        # keep getting responses until we get ours
         while True:
             socket_response = self.__socket_recv()
             if not socket_response:
@@ -47,13 +53,14 @@ class WsDaemon:
 
 
     def cmd_local(self, cmd, data=None):
-        return self.__send_payload("+cmd", cmd, data)
+        return self.__send_cmd_payload("+cmd", cmd, data)
 
 
     def cmd_remote(self, cmd, data=None):
-        return self.__send_payload("&cmd", cmd, data)
+        return self.__send_cmd_payload("&cmd", cmd, data)
 
 
+    # returns true on success, false on failure
     def __send_payload(self, name, params, request_id=None):
         payload = {
             "name": name,
@@ -75,6 +82,7 @@ class WsDaemon:
         })
 
     
+    # get file from prefix folder
     def __get_prefix_file(self, file, subdir=""):
         new_file = file
         if subdir:
@@ -83,6 +91,7 @@ class WsDaemon:
         return os.path.join(self.__prefix, new_file)
 
 
+    # receive a full message from socket
     def __socket_recv(self):
         chunks = []
         while True:
