@@ -13,6 +13,7 @@ SOCKET_FAILURE = -1
 
 
 class WsDaemon:
+    # TODO add timeout for our socket-getting loops
     def __init__(self, prefix=None):
         self.__prefix = os.getenv("WSDAEMON_PREFIX", "/root/ws-daemon") if prefix is None else prefix
 
@@ -47,9 +48,16 @@ class WsDaemon:
             if not socket_response:
                 return SOCKET_FAILURE
 
-            socket_parsed = json.loads(socket_response)
-            if socket_parsed["id"] == request_id:
-                return socket_parsed["status"]
+            try:
+                res_parsed = json.loads(socket_response)
+
+                # check if valid JSON and if is for us
+                valid_response = ("status" in res_parsed) and ("id" in res_parsed)
+
+                if valid_response and (res_parsed["id"] == request_id):
+                    return res_parsed["status"]
+            except (ValueError, KeyError):          # could not decode json, does not have correct params
+                pass
 
 
     def cmd_local(self, cmd, data=None):
@@ -71,6 +79,7 @@ class WsDaemon:
             payload["id"] = request_id
 
         payload_bytes = json.dumps(payload).encode("utf-8")
+
         sent = self.__client.send(payload_bytes)
         return (sent != 0)      # 0 means failure
 
