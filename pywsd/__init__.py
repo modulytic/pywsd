@@ -22,8 +22,15 @@ class WsDaemon:
         if os.path.exists(socket_path):
             self.__client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.__client.connect(socket_path)
-        else:
-            raise Exception("Daemon does not appear to be running: %s does not exist" % (socket_path))
+        else:       # no socket file, check port 9007
+            host = os.getenv("WSDAEMON_HOST", "localhost")
+            docker_params = (host, 9007)
+
+            self.__client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                self.__client.connect(docker_params)
+            except:     # Failed, not running
+                raise Exception("Daemon does not appear to be running: %s does not exist, and nothing on %s:9007" % (socket_path, host))
 
 
     def __del__(self):
